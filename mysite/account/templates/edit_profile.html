@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container profile-edit-container">
+  <a href="#" class="back-arrow" onclick="confirmBack(event)">← Назад</a>
+
+  <h2>Редактирование профиля</h2>
+
+  <form id="profileForm" method="post" class="profile-form-modern">
+    {% csrf_token %}
+    <div class="form-grid-modern">
+      {% for field in form.visible_fields %}
+        <div class="form-group-modern">
+          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% if field.errors %}
+            <div class="error">{{ field.errors|striptags }}</div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+    <div class="form-footer-modern">
+      <button type="submit" class="save-btn">Сохранить</button>
+    </div>
+  </form>
+</div>
+
+<!-- Попап подтверждения -->
+<div id="confirm-popup" class="popup_3-overlay">
+  <div class="popup_3-box">
+    <p>Сохранить изменения?</p>
+    <div class="popup_3-buttons">
+      <button onclick="proceedBack()">Да</button>
+      <button onclick="closePopup()">Нет</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function confirmBack(event) {
+    event.preventDefault();
+    document.getElementById("confirm-popup").style.display = "flex";
+  }
+
+  function closePopup() {
+    document.getElementById("confirm-popup").style.display = "none";
+  }
+
+  function proceedBack() {
+    window.location.href = "{% url 'home' %}";
+  }
+</script>
+{% endblock %}

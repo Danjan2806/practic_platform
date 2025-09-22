@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+  .filters {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgb(0 0 0 / 0.1);
+    margin-bottom: 30px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    position: relative;
+  }
+
+  .filters > div {
+    display: flex;
+    flex-direction: column;
+    min-width: 150px;
+  }
+
+  .filters-submit {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    background-color: #3f51b5;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 10px 20px;
+    transition: background-color 0.3s ease;
+  }
+
+  .filters-submit:hover {
+    background-color: #303f9f;
+  }
+
+  label {
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #333;
+  }
+
+  input[type="date"],
+  select {
+    padding: 6px 10px;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    transition: border-color 0.2s ease;
+  }
+  input[type="date"]:focus,
+  select:focus {
+    outline: none;
+    border-color: #3f51b5;
+    box-shadow: 0 0 5px #3f51b5aa;
+  }
+
+  button[type="submit"] {
+    background-color: #3f51b5;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 10px 20px;
+    align-self: flex-end;
+    transition: background-color 0.3s ease;
+  }
+  button[type="submit"]:hover {
+    background-color: #303f9f;
+  }
+
+  h1 {
+    margin-bottom: 25px;
+    font-weight: 700;
+    color: #222;
+  }
+
+  h2 {
+    margin-bottom: 15px;
+    font-weight: 600;
+    color: #444;
+  }
+
+  p {
+    margin-top: 15px;
+    font-size: 1.1rem;
+    color: #555;
+  }
+
+  canvas#analyticsChart {
+    background: #fafafa;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+  }
+
+  .back-arrow {
+    display: inline-block;
+    margin-bottom: 20px;
+    color: #3f51b5;
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .back-arrow:hover {
+    text-decoration: underline;
+  }
+</style>
+<div class="container">
+  <a href="{% url 'profile' %}" class="back-arrow">← Назад</a>
+  <h1>Аналитика заказов</h1>
+
+  <form id="analytics-form" method="get" class="filters" style="position: relative;">
+    <div>
+      <label>Период с:</label>
+      <input type="date" name="start_date" value="{{ start_date }}">
+    </div>
+    <div>
+      <label>по:</label>
+      <input type="date" name="end_date" value="{{ end_date }}">
+    </div>
+    <div>
+      <label>Группировка:</label>
+      <select name="interval">
+        <option value="week" {% if interval == 'week' %}selected{% endif %}>Неделя</option>
+        <option value="month" {% if interval == 'month' %}selected{% endif %}>Месяц</option>
+        <option value="year" {% if interval == 'year' %}selected{% endif %}>Год</option>
+      </select>
+    </div>
+    <div>
+      <label>Тип анализа:</label>
+      <select name="chart_type">
+        <option value="count" {% if chart_type == 'count' %}selected{% endif %}>Количество заказов</option>
+        <option value="empty" {% if chart_type == 'empty' %}selected{% endif %}>Периоды без заказов</option>
+        <option value="peak" {% if chart_type == 'peak' %}selected{% endif %}>Пиковые значения</option>
+      </select>
+    </div>
+
+    <button type="submit" class="filters-submit">Построить график</button>
+  </form>
+
+  <h2>{{ chart_label }}</h2>
+
+  {% if chart_type == 'peak' and peak_value and peak_period %}
+    <p><strong>Пиковый период:</strong> {{ peak_period }} — {{ peak_value }} заказов</p>
+  {% endif %}
+
+  <canvas id="analyticsChart" width="800" height="400"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const labels = {{ labels_json|safe }};
+  const values = {{ values_json|safe }};
+  const backgroundColors = {{ background_colors_json|safe }};
+
+  const ctx = document.getElementById('analyticsChart').getContext('2d');
+  if(window.chart) {
+    window.chart.destroy();
+  }
+  window.chart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+          labels: labels,
+          datasets: [{
+              label: '{{ chart_label }}',
+              data: values,
+              backgroundColor: backgroundColors,
+              borderWidth: 1,
+          }]
+      },
+      options: {
+          responsive: true,
+          scales: {
+              y: {
+                  beginAtZero: true,
+                  precision: 0,
+              }
+          },
+          plugins: {
+              legend: { display: false }
+          }
+      }
+  });
+</script>
+{% endblock %}

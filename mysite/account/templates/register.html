@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}
+{% block content %}
+<div class="container" style="max-width: 480px; margin: 40px auto; background: #fff; padding: 40px 30px; border-radius: 12px; box-shadow: 0 6px 18px rgba(0,0,0,0.1);">
+  <h1 style="font-weight: 700; color: #004AAD; margin-bottom: 30px; text-align: center;">Регистрация</h1>
+  
+  <form method="post" novalidate>
+    {% csrf_token %}
+    
+    {{ form.non_field_errors }}
+    
+    {% for field in form %}
+      <div class="form-group" style="margin-bottom: 20px;">
+        <label for="{{ field.id_for_label }}" style="display: block; font-weight: 600; color: #003380; margin-bottom: 6px;">
+          {{ field.label }}
+          {% if field.field.required %}<span style="color: #e00;">*</span>{% endif %}
+        </label>
+        {{ field|add_class:"custom-input" }}
+        {% if field.help_text %}
+          <small style="color: #666; display: block; margin-top: 4px;">{{ field.help_text }}</small>
+        {% endif %}
+        {% for error in field.errors %}
+          <div style="color: #e00; font-size: 13px; margin-top: 4px;">{{ error }}</div>
+        {% endfor %}
+      </div>
+    {% endfor %}
+    
+    <button type="submit" style="width: 100%; padding: 14px 0; background-color: #004AAD; color: white; font-weight: 700; font-size: 16px; border: none; border-radius: 8px; cursor: pointer; transition: background-color 0.3s ease;">
+      Зарегистрироваться
+    </button>
+  </form>
+
+  <p style="text-align: center; margin-top: 20px; font-size: 14px; color: #555;">
+    Уже зарегистрированы? <a href="{% url 'login' %}" style="color: #004AAD; font-weight: 600;">Войти</a>
+  </p>
+</div>
+
+<style>
+  .custom-input {
+    width: 100%;
+    padding: 12px 14px;
+    font-size: 15px;
+    border: 1.3px solid #bbb;
+    border-radius: 10px;
+    outline: none;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  .custom-input:focus {
+    border-color: #004AAD;
+    box-shadow: 0 0 8px rgba(0, 74, 173, 0.3);
+  }
+</style>
+{% endblock %}

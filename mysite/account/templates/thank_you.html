@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+  .thank-you-container {
+    max-width: 700px;
+    margin: 60px auto;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.07);
+    padding: 40px 30px;
+    text-align: center;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+
+  .thank-you-container h1 {
+    font-size: 2.2rem;
+    color: #004AAD;
+    margin-bottom: 20px;
+  }
+
+  .thank-you-container p {
+    font-size: 1.2rem;
+    color: #444;
+    margin-bottom: 30px;
+  }
+
+  .action-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    padding: 12px 24px;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  .btn-download {
+    background-color: #4CAF50;
+    color: white;
+  }
+
+  .btn-download:hover {
+    background-color: #3e8e41;
+  }
+
+  .btn-home {
+    background-color: #e0e0e0;
+    color: #333;
+  }
+
+  .btn-home:hover {
+    background-color: #c2c2c2;
+  }
+</style>
+
+<div class="thank-you-container">
+  <h1>🎉 Спасибо за бронирование!</h1>
+  <p>Ваш заказ успешно оформлен. Мы отправили информацию на указанный email, если вы его указали.</p>
+
+  <div class="action-buttons">
+    {% if order.receipt_file %}
+      <a href="{% url 'download_receipt' order.id %}" class="btn btn-download" target="_blank">📥 Скачать чек</a>
+    {% endif %}
+    <a href="{% url 'home' %}" class="btn btn-home">🏠 На главную</a>
+  </div>
+</div>
+{% endblock %}

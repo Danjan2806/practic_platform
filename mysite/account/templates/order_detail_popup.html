@@ -1,0 +1,17 @@
+<h2>{{ order.room.name }}</h2>
+<div class="popup_2-room-images">
+  {% for img in order.room.images.all %}
+    <img src="{{ img.image.url }}" alt="Room photo" class="popup_2-image">
+  {% endfor %}
+</div>
+<p><strong>Удобства:</strong></p>
+<ul>
+  {% for conv in order.room.conveniences.all %}
+    <li>{{ conv.name }}</li>
+  {% endfor %}
+</ul>
+<p><strong>Тариф:</strong> {{ order.tariff.title }}</p>
+<p><strong>Дата заезда:</strong> {{ order.check_in }} в {{ order.arrival_time }}</p>
+<p><strong>Дата выезда:</strong> {{ order.check_out }}</p>
+<p><strong>Итоговая цена:</strong> {{ order.total_price }} ₽</p>
+<p><strong>Пожелания:</strong> {{ order.wishes }}</p>

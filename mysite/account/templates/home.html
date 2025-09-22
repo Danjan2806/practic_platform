@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Главная — DSTU Hotel{% endblock %}
+
+{% block content %}
+<div id="search-popup" class="search-popup-overlay">
+  <div class="search-popup-box">
+    <span class="search-popup-close" onclick="closeSearchPopup()">&times;</span>
+    <h3>Выберите даты проживания в {{ hotel_name }}</h3>
+    
+    <form method="get" class="search-popup-form">
+      <label>Дата заезда:</label>
+      <input type="date" name="check_in" value="{{ check_in|default:'' }}" min="{{ today }}" required>
+
+      <label>Дата выезда:</label>
+      <input type="date" name="check_out" value="{{ check_out|default:'' }}" min="{{ today }}" required>
+
+      <label>Гостей:</label>
+      <select name="guests">
+        {% for i in 1|to_range:5 %}
+          <option value="{{ i }}" {% if i == guests %}selected{% endif %}>{{ i }} гост{% if i == 1 %}ь {% else %}ей {% endif %}</option>
+        {% endfor %}
+      </select>
+
+      <button type="submit">Найти</button>
+    </form>
+  </div>
+</div>
+
+<div class="date-toolbar">
+  <div class="date-summary">
+    <div class="check-in">
+      <p class="label">Заезд</p>
+      <p class="date">{{ check_in|date:"j E Y" }}, {{ check_in_time|default:"с 14:00" }}</p>
+    </div>
+    <div class="check-out">
+      <p class="label">Выезд</p>
+      <p class="date">{{ check_out|date:"j E Y" }}, {{ check_out_time|default:"до 12:00" }}</p>
+    </div>
+  </div>
+
+  <button class="open-search-btn" onclick="openSearchPopup()">Изменить параметры</button>
+</div>
+
+
+<div class="container">
+  <h1>Доступные варианты</h1>
+  <div class="rooms-grid">
+    {% for room_type in available_room_types %}
+      <div class="room-block">
+        <!-- Левая часть (превью + попап) -->
+        <div class="room-photo" onclick="openPopup('{{ room_type.id }}')">
+          {% if room_type.main_image %}
+            <img src="{{ room_type.main_image.url }}" alt="{{ room_type.name }}">
+          {% else %}
+            <img src="{% static 'images/default-room.jpg' %}" alt="Без изображения">
+          {% endif %}
+          <p class="room-name">{{ room_type.name }}</p>
+          <p>{{ room_type.description }}</p>
+          <ul class="room-features">
+            {% for conv in room_type.conveniences.all|slice:":4" %}
+              <li><i class="{{ conv.icon }}"></i> {{ conv.name }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+
+        <!-- Правая часть (тарифы) -->
+        <div class="room-tariffs">
+          {% for tariff in room_type.tariffs.all %}
+          <div class="tariff-card">
+            <ul>
+              <li>🛏 {{ tariff.get_bed_type_display }}</li>  {# Показываем красивое название кровати из choices #}
+              <li>
+                {% if tariff.includes_breakfast %}
+                  🍽 Завтрак включён
+                {% else %}
+                  🍽 Без завтрака
+                {% endif %}
+              </li>
+              <li>❌ {{ tariff.cancellation }}</li>
+              <li>
+                {% if tariff.payment_in_advance %}
+                  💳 Предоплата
+                {% else %}
+                  💵 Оплата на месте
+                {% endif %}
+              </li>
+            </ul>
+            <div class="tariff-label">{{ tariff.title }}</div>
+            <div class="tariff-price">{{ tariff.price_per_night|floatformat:"0" }} ₽</div>
+            <div class="tariff-note">за ночь</div>
+            <a class="tariff-book" 
+              href="#" 
+              onclick="handleBookingClick(event, '{{ room_type.id }}', '{{ tariff.id }}')">
+              Забронировать
+            </a>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      <!-- Попап (внутри цикла) -->
+<div id="popup-{{ room_type.id }}" class="popup-overlay" onclick="closePopup(event, '{{ room_type.id }}')">
+  <div class="popup-box" onclick="event.stopPropagation()">
+
+    <!-- Левая часть: фото -->
+    <div class="popup-left">
+      <div class="popup-images">
+        {% for img in room_type.images.all %}
+          <img src="{{ img.image.url }}" alt="Фото {{ forloop.counter }}">
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Правая часть: удобства и тариф -->
+    <div class="popup-right">
+      <h2>{{ room_type.name }}</h2>
+
+      <div class="popup-conveniences">
+        <h4>Удобства:</h4>
+        <ul>
+          {% for conv in room_type.conveniences.all %}
+              <li><i class="{{ conv.icon }}"></i> {{ conv.name }}</li>
+            {% endfor %}
+        </ul>
+      </div>
+          {% with room_type.tariffs.all|dictsort:"price_per_night" as sorted_tariffs %}
+            {% if sorted_tariffs %}
+              {% with sorted_tariffs.0 as cheapest %}
+                {% if cheapest.id %}
+                <div class="popup-tariff">
+                  <p><strong>{{ cheapest.title }}</strong></p>
+                  <p>Цена: {{ cheapest.price_per_night|floatformat:"0" }} ₽/ночь</p>
+                  <p>
+                    {% if cheapest.includes_breakfast %}
+                      🍽 Завтрак включён
+                    {% else %}
+                      🍽 Без завтрака
+                    {% endif %}
+                  </p>
+                  <p>❌ {{ cheapest.cancellation }}</p>
+                  <p>
+                    {% if cheapest.payment_in_advance %}
+                      💳 Предоплата
+                    {% else %}
+                  💵 Оплата на месте
+                    {% endif %}
+                  </p>
+                    <a class="tariff-book" 
+                      href="#" 
+                      onclick="handleBookingClick(event, '{{ room_type.id }}', '{{ cheapest.id }}')">
+                      Забронировать
+                    </a>
+                </div>
+                {% endif %}
+              {% endwith %}
+            {% endif %}
+          {% endwith %}
+        </div>
+        <span class="popup-close" onclick="closePopup(event, '{{ room_type.id }}')">&times;</span>
+      </div>
+    </div>
+    {% endfor %}
+    <a href="{% url 'rooms' %}">Посмотреть все номера</a></li>
+  </div>
+</div>
+
+<script>
+  function handleBookingClick(event, roomTypeId, tariffId) {
+    event.preventDefault();
+
+    // Получаем и чистим значения
+    const checkIn = localStorage.getItem('check_in')?.trim();
+    const checkOut = localStorage.getItem('check_out')?.trim();
+
+    // Проверяем, заданы ли корректные даты
+    if (!checkIn || !checkOut || checkIn === 'undefined' || checkOut === 'undefined' || checkIn === 'null' || checkOut === 'null') {
+      alert("Пожалуйста, выберите даты заезда и выезда перед бронированием.");
+      return;
+    }
+
+    // Всё ок — переходим по ссылке
+    const url = `/account/order/create/${roomTypeId}/${tariffId}/?check_in=${checkIn}&check_out=${checkOut}`;
+    window.location.href = url;
+  }
+
+  function openPopup(id) {
+    document.getElementById('popup-' + id).style.display = 'flex';
+  }
+
+  function closePopup(event, id) {
+    document.getElementById('popup-' + id).style.display = 'none';
+  }
+
+  function openSearchPopup() {
+    document.getElementById('search-popup').style.display = 'flex';
+
+    // Вставляем значения из localStorage, если они есть
+    const checkIn = localStorage.getItem('check_in');
+    const checkOut = localStorage.getItem('check_out');
+    const guests = localStorage.getItem('guests');
+
+    if (checkIn) document.querySelector('input[name="check_in"]').value = checkIn;
+    if (checkOut) document.querySelector('input[name="check_out"]').value = checkOut;
+    if (guests) document.querySelector('select[name="guests"]').value = guests;
+  }
+
+  function closeSearchPopup() {
+    document.getElementById('search-popup').style.display = 'none';
+  }
+
+  // При отправке формы сохраняем значения в localStorage
+  document.addEventListener("DOMContentLoaded", function () {
+    const form = document.querySelector('.search-popup-form');
+    if (form) {
+      form.addEventListener('submit', function () {
+        const checkIn = form.querySelector('input[name="check_in"]').value;
+        const checkOut = form.querySelector('input[name="check_out"]').value;
+        const guests = form.querySelector('select[name="guests"]').value;
+
+        localStorage.setItem('check_in', checkIn);
+        localStorage.setItem('check_out', checkOut);
+        localStorage.setItem('guests', guests);
+      });
+    }
+  });
+</script>
+{% endblock %}

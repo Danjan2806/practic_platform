@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<style>
+  .login-form {
+  background: #fefefe;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.login-title {
+  margin-bottom: 20px;
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+  text-align: center;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: #555;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus {
+  border-color: #004aad;
+  outline: none;
+}
+
+.login-btn {
+  width: 100%;
+  padding: 12px;
+  background: #004aad;
+  color: white;
+  font-size: 15px;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.login-btn:hover {
+  background: #00337a;
+}
+
+.login-note {
+  margin-top: 14px;
+  font-size: 14px;
+  text-align: center;
+  color: #666;
+}
+
+.login-note a {
+  color: #004aad;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.login-note a:hover {
+  text-decoration: underline;
+}
+</style>
+<div class="container profile-edit-container" style="max-width: 1000px">
+  <h1 style="margin-bottom: 24px; color: #004AAD; font-weight: 700;">Оформление заказа</h1>
+
+  <div class="room-summary" style="background: #fff; padding: 24px; border-radius: 12px; box-shadow: 0 4px 14px rgba(0,0,0,0.07); margin-bottom: 30px;">
+    {% if room_type.main_image %}
+      <img src="{{ room_type.main_image.url }}" alt="{{ room_type.name }}" style="max-width: 100%; height: auto; border-radius: 8px; margin-bottom: 16px;">
+    {% endif %}
+    <h2 style="font-weight: 700; color: #003380; margin-bottom: 12px;">{{ room_type.name }}</h2>
+    <p><strong>Тариф:</strong> {{ tariff.title }}</p>
+    <p><strong>Количество ночей:</strong> {{ nights }}</p>
+    <p><strong>Цена за ночь:</strong> {{ tariff.price_per_night }} ₽</p>
+    <p><strong>Общая цена:</strong> {{ total_price }} ₽</p>
+    <p><strong>Дата заезда:</strong> {{ check_in }}</p>
+    <p><strong>Дата выезда:</strong> {{ check_out }}</p>
+    <p><strong>Доступен с:</strong> {{ available_from }}</p>
+    <ul style="margin-top: 12px; padding-left: 18px; color: #555;">
+      {% for conv in room_type.conveniences.all %}
+        <li><i class="{{ conv.icon }}"></i> {{ conv.name }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  {% if not request.user.is_authenticated %}
+    <h2 id="toggle-login-form" style="cursor: pointer; color: #004AAD; font-weight: 600; margin-bottom: 16px;">Авторизуйтесь и ускорьте бронирование</h3>
+
+    <div id="login-form-wrapper" style="display: none; margin-bottom: 30px;">
+      <form method="post" action="{% url 'login' %}?next={{ request.get_full_path }}" style="background: #f9f9f9; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); width: 100%; max-width: 400px; margin: 0 auto;">
+        {% csrf_token %}
+        <p>Email</p>
+        <input type="email" name="email" placeholder="Email" required style="width: 100%; padding: 10px; margin-bottom: 12px; border: 1px solid #ccc; border-radius: 6px;">
+        <p>Пароль</p>
+        <input type="password" name="password" placeholder="Пароль" required style="width: 100%; padding: 10px; margin-bottom: 16px; border: 1px solid #ccc; border-radius: 6px;">
+
+        <button type="submit" class="save-btn" style="width: 100%; background-color: #004AAD; color: white; padding: 12px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">
+          Войти
+        </button>
+      </form>
+
+      <p style="text-align: center; margin-top: 12px; font-size: 14px; color: #555;">
+        Нет аккаунта?
+        <a href="{% url 'register' %}" style="color: #004AAD;">Зарегистрируйтесь</a>
+      </p>
+    </div>
+  {% endif %}
+
+  <hr style="margin: 40px 0; border-color: #eee;">
+
+  <h3 style="color: #004AAD; font-weight: 700; margin-bottom: 20px; text-align: center;">Контактная информация</h3>
+
+  <form method="post" style="background: #fff; padding: 30px; border-radius: 16px; box-shadow: 0 4px 14px rgba(0,0,0,0.07); max-width: 600px; margin-left: auto; margin-right: auto;">
+    {% csrf_token %}
+
+    <div class="form-grid-modern">
+      <div class="form-group-modern">
+        <label for="first_name">Имя:</label>
+        <input type="text" id="first_name" name="first_name" required autocomplete="given-name">
+      </div>
+      <div class="form-group-modern">
+        <label for="last_name">Фамилия:</label>
+        <input type="text" id="last_name" name="last_name" required autocomplete="family-name">
+      </div>
+      <div class="form-group-modern" style="grid-column: 1 / -1;">
+        <label for="email">Электронная почта:</label>
+        <input type="email" id="email" name="email" required autocomplete="email">
+      </div>
+      <div class="form-group-modern" style="grid-column: 1 / -1;">
+        <label for="phone_number">Телефон:</label>
+        <input type="tel" id="phone_number" name="phone_number" required autocomplete="tel">
+      </div>
+      <div class="form-group-modern"> 
+        <label for="arrival_time">Время заезда (не ранее {{ available_from }}):</label>
+        <input type="time" id="arrival_time" name="arrival_time" min="{{ available_from }}">
+      </div>
+      <div class="form-group-modern" style="grid-column: 1 / -1;">
+        <label for="wishes">Пожелания:</label>
+        <textarea id="wishes" name="wishes" rows="4" cols="50" placeholder="Ваши пожелания"></textarea>
+      </div>
+    </div>
+
+    <div class="form-footer-modern">
+      <button type="submit" class="save-btn">Продолжить</button>
+    </div>
+  </form>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const toggle = document.getElementById('toggle-login-form');
+    const form = document.getElementById('login-form-wrapper');
+
+    toggle && toggle.addEventListener('click', function () {
+      if (form.style.display === 'none' || form.style.display === '') {
+        form.style.display = 'block';
+        toggle.innerText = 'Скрыть форму входа';
+      } else {
+        form.style.display = 'none';
+        toggle.innerText = 'Авторизуйтесь и ускорьте бронирование';
+      }
+    });
+  });
+</script>
+{% endblock %}

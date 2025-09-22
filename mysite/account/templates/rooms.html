@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container">
+  <h1>Все номера DSTU Hotel</h1>
+
+  {% for room in room_types %}
+    <div class="rooms-list-card">
+      <div class="rooms-list-image">
+        {% if room.images.all %}
+          <img src="{{ room.images.first.image.url }}" alt="{{ room.name }}" class="rooms-list-photo">
+        {% endif %}
+      </div>
+      <div class="rooms-list-info">
+        <h2>{{ room.name }}</h2>
+        <p><strong>Вместимость:</strong> {{ room.capacity }} чел.</p>
+
+        <p><strong>Удобства:</strong>
+          <ul class="rooms-list-conv">
+            {% for conv in room.conveniences.all %}
+              <li><i class="{{ conv.icon }}"></i> {{ conv.name }}</li>
+            {% endfor %}
+          </ul>
+        </p>
+
+        <p><strong>Тарифы:</strong></p>
+        <ul class="rooms-list-tariffs">
+          {% for tariff in room.tariffs.all %}
+            <li>{{ tariff.title }} — {{ tariff.price_per_night }} ₽/ночь</li>
+          {% endfor %}
+        </ul>
+
+        <a href="{% url 'home' %}?room_id={{ room.id }}" class="rooms-list-btn">Посмотреть доступность</a>
+      </div>
+    </div>
+    <hr>
+  {% endfor %}
+</div>
+{% endblock %}

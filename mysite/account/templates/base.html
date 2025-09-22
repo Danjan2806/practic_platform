@@ -1,0 +1,98 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>DSTU Hotel — {% block title %}Главная{% endblock %}</title>
+    <link href="{% static "css/base.css" %}" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha512-vxyz..." crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+        <div class="container">
+            <div class="navbar-brand">
+            <a href="/" class="logo">DSTU Hotel</a>
+            </div>
+
+            <div class="navbar-user">
+            <div class="user-menu" id="userMenu">
+                {% if user.is_authenticated %}
+                <div class="user-toggle" onclick="toggleUserDropdown()">
+                    <div class="user-avatar">{{ user.profile.first_name|first }}{{ user.profile.second_name|first }}</div>
+                    <span>{{ user.profile.first_name }} {{ user.profile.second_name|slice:":1" }}.</span>
+                    <span id="arrowIcon">▼</span>
+                </div>
+
+                <div class="user-dropdown" id="userDropdown">
+                    <a href="{% url 'edit_profile' %}">Изменить профиль</a>
+                    <a href="{% url 'profile' %}">Заказы и аналитика</a>
+                    <a href="{% url 'logout' %}">Выйти</a>
+                </div>
+
+                {% else %}
+                <div class="user-toggle" id="userToggle" onclick="toggleUserDropdown()">
+                    <div class="user-avatar">
+                    {% if user.is_authenticated %}
+                        {{ user.username|slice:":2"|upper }}
+                    {% else %}
+                        <svg xmlns="http://www.w3.org/2000/svg" width="29" height="29" fill="#EEE" viewBox="0 0 24 24">
+                        <path d="M12 12c2.7 0 4.5-1.8 4.5-4.5S14.7 3 12 3 7.5 4.8 7.5 7.5 9.3 12 12 12zm0 2.25c-3 0-9 1.5-9 4.5V21h18v-2.25c0-3-6-4.5-9-4.5z"/>
+                        </svg>
+                    {% endif %}
+                    </div>
+                    <span>Войти</span>
+                    <span id="arrowIcon">▼</span>
+                </div>
+
+                <div class="user-dropdown" id="userDropdown">
+                    <form method="post" action="{% url 'login' %}?next={{ request.path }}">
+                        {% csrf_token %}
+                        <input type="text" name="email" placeholder="Email" required><br>
+                        <input type="password" name="password" placeholder="Пароль" required><br>
+                        <button type="submit">Войти</button>
+                    </form>
+                    <a href="{% url 'register' %}">Зарегистрироваться</a>
+                </div>
+                {% endif %}
+            </div>
+            </div>
+        </div>
+        </nav>
+    </header>
+
+    <main class="container">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 DSTU Hotel. Все права защищены.</p>
+        </div>
+    </footer>
+</body>
+<script>
+    function toggleUserDropdown() {
+    const dropdown = document.getElementById("userDropdown");
+    const arrow = document.getElementById("arrowIcon");
+    if (dropdown.style.display === "block") {
+      dropdown.style.display = "none";
+      arrow.innerHTML = "▼";
+    } else {
+      dropdown.style.display = "block";
+      arrow.innerHTML = "▲";
+    }
+  }
+    document.addEventListener('click', function(e) {
+    const dropdown = document.getElementById('userDropdown');
+    const toggleBtn = document.getElementById('userToggle');
+    if (!toggleBtn.contains(e.target) && !dropdown.contains(e.target)) {
+      dropdown.classList.add('hidden');
+      const icon = document.getElementById('dropdownIcon');
+      if (icon) icon.classList.remove('rotate-180');
+    }
+  });
+</script>
+</html>

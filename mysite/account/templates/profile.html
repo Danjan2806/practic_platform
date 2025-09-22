@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container">
+  <a href="/" class="back-arrow">← Вернуться на главную</a>
+  <div class="tabs" style="display: flex; gap: 20px; margin-bottom: 25px;">
+  <a href="{% url 'profile' %}" 
+     class="tab-button {% if request.resolver_match.url_name == 'profile' %}active-tab{% endif %}">
+     📦 Мои заказы
+  </a>
+  <a href="{% url 'analytics' %}" 
+     class="tab-button {% if request.resolver_match.url_name == 'analytics' %}active-tab{% endif %}">
+     📊 Аналитика
+  </a>
+</div>
+  <h1>Мои заказы</h1>
+  <div class="sort-buttons-container" style="display: flex; gap: 20px; margin-bottom: 20px;">
+    <!-- Сортировка по дате заезда -->
+    <div class="sort-dropdown">
+      <button class="sort-btn" data-dropdown="date-dropdown">
+        Дата заезда
+        <span>▼</span>
+      </button>
+      <ul class="dropdown-menu" id="date-dropdown">
+        <li data-sort="check_in">Сначала старые</li>
+        <li data-sort="-check_in">Сначала новые</li>
+      </ul>
+    </div>
+
+    <!-- Сортировка по цене -->
+    <div class="sort-dropdown">
+      <button class="sort-btn" data-dropdown="price-dropdown">
+        Цена
+        <span>▼</span>
+      </button>
+      <ul class="dropdown-menu" id="price-dropdown">
+        <li data-sort="total_price">По возрастанию</li>
+        <li data-sort="-total_price">По убыванию</li>
+      </ul>
+    </div>
+
+    <!-- Сортировка по времени заезда -->
+    <div class="sort-dropdown">
+      <button class="sort-btn" data-dropdown="arrival-dropdown">
+        Время заезда
+        <span>▼</span>
+      </button>
+      <ul class="dropdown-menu" id="arrival-dropdown">
+        <li data-sort="arrival_time">Сначала ранние</li>
+        <li data-sort="-arrival_time">Сначала поздние</li>
+      </ul>
+    </div>
+
+    <!-- Сортировка по тарифу -->
+    <div class="sort-dropdown">
+      <button class="sort-btn" data-dropdown="tariff-dropdown">
+        Тариф
+        <span>▼</span>
+      </button>
+      <ul class="dropdown-menu" id="tariff-dropdown">
+        <li data-sort="tariff">По алфавиту А-Я</li>
+        <li data-sort="-tariff">По алфавиту Я-А</li>
+      </ul>
+    </div>
+  </div>
+  {% if orders %}
+    <div style="overflow-x: auto;">
+      <table style="width: 100%; border-collapse: collapse; background: white; box-shadow: 0 4px 14px rgba(0,0,0,0.07); border-radius: 12px; overflow: hidden; font-size: 15px;">
+        <thead style="background: #d4e4fa;">
+          <tr>
+            <th style="border: 1px solid #ccc; padding: 12px; text-align: left;">Номер</th>
+            <th style="border: 1px solid #ccc; padding: 12px; text-align: left;">Тариф</th>
+            <th style="border: 1px solid #ccc; padding: 12px; text-align: left; min-width: 180px;">Даты</th>
+            <th style="border: 1px solid #ccc; padding: 12px; text-align: left;">Цена</th>
+            <th style="border: 1px solid #ccc; padding: 12px; text-align: left;">Удобства</th>
+            <th style="border: 1px solid #ccc; padding: 12px; text-align: left;">Пожелания</th>
+            <th style="border: 1px solid #ccc; padding: 12px; text-align: left;">Время заезда</th>
+            <th style="border: 1px solid #ccc; padding: 12px; text-align: left;">Контакты</th>
+            <th style="border: 1px solid #ccc; padding: 12px; text-align: left;">Чек</th>
+            <th style="border: 1px solid #ccc; padding: 12px; text-align: left;">Действие</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for order in orders %}
+            <tr style="background: {% cycle '#ffffff' '#f5f7fa' %};">
+              <td style="border: 1px solid #ddd; padding: 12px;">{{ order.room.room_type.name }}</td>
+              <td style="border: 1px solid #ddd; padding: 12px;">{{ order.tariff.title }}</td>
+              <td style="border: 1px solid #ddd; padding: 12px; white-space: nowrap;">
+                {{ order.check_in }} — {{ order.check_out }}
+              </td>
+              <td style="border: 1px solid #ddd; padding: 12px;">{{ order.total_price }} ₽</td>
+              <td style="border: 1px solid #ddd; padding: 12px;">
+                {% if order.conveniences.all %}
+                  {% for conv in order.conveniences.all %}
+                    {{ conv.name }}{% if not forloop.last %}, {% endif %}
+                  {% endfor %}
+                {% else %}
+                  {% for conv in order.room.room_type.conveniences.all %}
+                    {{ conv.name }}{% if not forloop.last %}, {% endif %}
+                  {% empty %}
+                    —
+                  {% endfor %}
+                {% endif %}
+              </td>
+              <td style="border: 1px solid #ddd; padding: 12px;">{{ order.wishes|default:"—" }}</td>
+              <td style="border: 1px solid #ddd; padding: 12px;">{{ order.arrival_time|default:"—" }}</td>
+              <td style="border: 1px solid #ddd; padding: 12px;">
+                {{ order.creator.user.get_full_name }}<br>
+                {{ order.creator.user.email }}<br>
+                {{ order.creator.phone_number }}
+              </td>
+              <td style="border: 1px solid #ddd; padding: 12px;">
+                {% if order.receipt_file %}
+                  <a href="{% url 'download_receipt' order.id %}" target="_blank" rel="noopener noreferrer">Скачать</a>
+                {% else %}
+                  —
+                {% endif %}
+              </td>
+              <td style="border: 1px solid #ddd; padding: 12px;">
+                <a href="{% url 'order_edit' order.id %}" class="save-btn" style="padding: 6px 10px; font-size: 14px;">Редактировать</button>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p>У вас пока нет заказов.</p>
+  {% endif %}
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const currentSort = '{{ current_sort|default:"-check_in" }}';
+    const dropdowns = document.querySelectorAll('.sort-dropdown');
+
+    dropdowns.forEach(dropdown => {
+      // Подсветка выбранного пункта сортировки
+      dropdown.querySelectorAll('li').forEach(item => {
+        if (item.getAttribute('data-sort') === currentSort) {
+          item.style.fontWeight = '700';
+          item.style.color = '#004AAD';
+        }
+      });
+
+      const btn = dropdown.querySelector('.sort-btn');
+      const menu = dropdown.querySelector('.dropdown-menu');
+
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();  // чтобы клик не всплывал на document и не закрывал меню сразу
+        // Закрываем все остальные меню
+        dropdowns.forEach(d => {
+          if (d !== dropdown) d.classList.remove('open');
+        });
+        // Переключаем текущее меню
+        dropdown.classList.toggle('open');
+      });
+
+      menu.querySelectorAll('li').forEach(item => {
+        item.addEventListener('click', () => {
+          const sortValue = item.getAttribute('data-sort');
+          const url = new URL(window.location.href);
+
+          url.searchParams.set('sort', sortValue);
+
+          // При выборе сортировки - перезагружаем страницу с параметром
+          window.location.href = url.toString();
+        });
+      });
+    });
+
+    // Закрыть меню при клике вне
+    document.addEventListener('click', () => {
+      dropdowns.forEach(d => d.classList.remove('open'));
+    });
+  });
+</script>
+{% endblock %}
