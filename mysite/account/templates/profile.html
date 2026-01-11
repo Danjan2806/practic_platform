@@ -118,7 +118,10 @@
                 {% endif %}
               </td>
               <td style="border: 1px solid #ddd; padding: 12px;">
-                <a href="{% url 'order_edit' order.id %}" class="save-btn" style="padding: 6px 10px; font-size: 14px;">Редактировать</button>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                  <a href="{% url 'order_edit' order.id %}" class="save-btn" style="padding: 6px 10px; font-size: 14px;">Редактировать</a>
+                  <button class="delete-btn" data-order-id="{{ order.id }}" style="padding: 6px 10px; font-size: 14px;">Удалить</button>
+                </div>
               </td>
             </tr>
           {% endfor %}
@@ -129,50 +132,84 @@
     <p>У вас пока нет заказов.</p>
   {% endif %}
 </div>
+<!-- Модальное окно для подтверждения удаления -->
+<div class="popup_3-overlay hidden" id="deletePopup">
+  <div class="popup_3-box">
+    <span class="close-btn" id="deleteClose">&times;</span>
+    <h3>Вы уверены, что хотите удалить заказ?</h3>
+    <p>Это действие нельзя будет отменить.</p>
+    <div class="popup_3-buttons">
+      <form id="deleteForm" method="post">
+        {% csrf_token %}
+        <button type="submit">Да, удалить</button>
+        <button type="button" id="deleteCancel">Отмена</button>
+      </form>
+    </div>
+  </div>
+</div>
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const currentSort = '{{ current_sort|default:"-check_in" }}';
-    const dropdowns = document.querySelectorAll('.sort-dropdown');
+document.addEventListener('DOMContentLoaded', () => {
+  // -----------------------------
+  // 1️⃣ Модалка удаления
+  const deleteButtons = document.querySelectorAll('.delete-btn');
+  const deletePopup = document.getElementById('deletePopup');
+  const deleteClose = document.getElementById('deleteClose');
+  const deleteCancel = document.getElementById('deleteCancel');
+  const deleteForm = document.getElementById('deleteForm');
 
-    dropdowns.forEach(dropdown => {
-      // Подсветка выбранного пункта сортировки
-      dropdown.querySelectorAll('li').forEach(item => {
-        if (item.getAttribute('data-sort') === currentSort) {
-          item.style.fontWeight = '700';
-          item.style.color = '#004AAD';
-        }
-      });
-
-      const btn = dropdown.querySelector('.sort-btn');
-      const menu = dropdown.querySelector('.dropdown-menu');
-
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();  // чтобы клик не всплывал на document и не закрывал меню сразу
-        // Закрываем все остальные меню
-        dropdowns.forEach(d => {
-          if (d !== dropdown) d.classList.remove('open');
-        });
-        // Переключаем текущее меню
-        dropdown.classList.toggle('open');
-      });
-
-      menu.querySelectorAll('li').forEach(item => {
-        item.addEventListener('click', () => {
-          const sortValue = item.getAttribute('data-sort');
-          const url = new URL(window.location.href);
-
-          url.searchParams.set('sort', sortValue);
-
-          // При выборе сортировки - перезагружаем страницу с параметром
-          window.location.href = url.toString();
-        });
+  if (deleteButtons.length && deletePopup && deleteClose && deleteCancel && deleteForm) {
+    deleteButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const orderId = btn.dataset.orderId;
+        deleteForm.action = `/account/order/${orderId}/delete/`;
+        deletePopup.style.display = 'flex';
       });
     });
 
-    // Закрыть меню при клике вне
-    document.addEventListener('click', () => {
-      dropdowns.forEach(d => d.classList.remove('open'));
+
+    const closePopup = () => { deletePopup.style.display = 'none'; };
+    deleteClose.addEventListener('click', closePopup);
+    deleteCancel.addEventListener('click', closePopup);
+    deletePopup.addEventListener('click', e => { if (e.target === deletePopup) closePopup(); });
+  }
+
+  // -----------------------------
+  // 2️⃣ Фильтрация и сортировка заказов
+  const currentSort = '{{ current_sort|default:"-check_in" }}';
+  const dropdowns = document.querySelectorAll('.sort-dropdown');
+
+  dropdowns.forEach(dropdown => {
+    // Подсветка выбранного пункта
+    dropdown.querySelectorAll('li').forEach(item => {
+      if (item.getAttribute('data-sort') === currentSort) {
+        item.style.fontWeight = '700';
+        item.style.color = '#004AAD';
+      }
+    });
+
+    const btn = dropdown.querySelector('.sort-btn');
+    const menu = dropdown.querySelector('.dropdown-menu');
+
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      dropdowns.forEach(d => { if (d !== dropdown) d.classList.remove('open'); });
+      dropdown.classList.toggle('open');
+    });
+
+    menu.querySelectorAll('li').forEach(item => {
+      item.addEventListener('click', () => {
+        const sortValue = item.getAttribute('data-sort');
+        const url = new URL(window.location.href);
+        url.searchParams.set('sort', sortValue);
+        window.location.href = url.toString();
+      });
     });
   });
+
+  // Закрыть все меню при клике вне
+  document.addEventListener('click', () => {
+    dropdowns.forEach(d => d.classList.remove('open'));
+  });
+});
 </script>
 {% endblock %}

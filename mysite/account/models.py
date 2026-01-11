@@ -20,7 +20,7 @@ class Profile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True)
     first_name = models.CharField(blank=False, null=False, max_length=20, verbose_name="Имя")
     second_name = models.CharField(blank=False, null=False, max_length=20, verbose_name="Фамилия")
-    phone_number = models.CharField(blank=False, null=False, verbose_name="Телефон")
+    phone_number = models.CharField(blank=False, null=False, max_length=20, verbose_name="Телефон")
     date_of_birth = models.DateField(blank=True, null=True)
     email = models.EmailField(blank=False, null=False, max_length=50, verbose_name="Электронная почта")
     email_confirmed = models.BooleanField(default=False)
@@ -110,7 +110,7 @@ class Tariff(models.Model):
     price_per_night = models.DecimalField(max_digits=8, decimal_places=2)
     includes_breakfast = models.BooleanField(default=False)
     bed_type = models.CharField(max_length=20, choices=BED_TYPE_CHOICES, default='double')
-    cancellation = models.CharField(help_text="Условия отмены")
+    cancellation = models.CharField(help_text="Условия отмены", max_length=1000)
 
     def cancellation_deadline(self):
         """Возвращает дату, до которой можно отменить бронирование без штрафа"""

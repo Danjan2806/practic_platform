@@ -12,10 +12,10 @@
     
     <form method="get" class="search-popup-form">
       <label>Дата заезда:</label>
-      <input type="date" name="check_in" value="{{ check_in|default:'' }}" min="{{ today }}" required>
+      <input type="date" name="check_in" value="{{ check_in|default:today }}" min="{{ today }}" required>
 
       <label>Дата выезда:</label>
-      <input type="date" name="check_out" value="{{ check_out|default:'' }}" min="{{ today }}" required>
+      <input type="date" name="check_out" value="{{ check_out|default:today }}" min="{{ today }}" required>
 
       <label>Гостей:</label>
       <select name="guests">
@@ -195,15 +195,10 @@
 
   function openSearchPopup() {
     document.getElementById('search-popup').style.display = 'flex';
-
-    // Вставляем значения из localStorage, если они есть
-    const checkIn = localStorage.getItem('check_in');
-    const checkOut = localStorage.getItem('check_out');
-    const guests = localStorage.getItem('guests');
-
-    if (checkIn) document.querySelector('input[name="check_in"]').value = checkIn;
-    if (checkOut) document.querySelector('input[name="check_out"]').value = checkOut;
-    if (guests) document.querySelector('select[name="guests"]').value = guests;
+    const form = document.querySelector('.search-popup-form');
+    form.querySelector('input[name="check_in"]').value = form.querySelector('input[name="check_in"]').value || localStorage.getItem('check_in');
+    form.querySelector('input[name="check_out"]').value = form.querySelector('input[name="check_out"]').value || localStorage.getItem('check_out');
+    form.querySelector('select[name="guests"]').value = form.querySelector('select[name="guests"]').value || localStorage.getItem('guests');
   }
 
   function closeSearchPopup() {

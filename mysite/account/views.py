@@ -23,6 +23,7 @@ from django.db.models.functions import TruncWeek, TruncMonth, TruncYear
 from django.db import connection
 from collections import defaultdict
 from django.utils.dateformat import format as df
+from django.utils import timezone
 
 signer = TimestampSigner()
 
@@ -165,9 +166,11 @@ def create_order_view(request, room_type_id, tariff_id):
     tariff = get_object_or_404(Tariff, id=tariff_id)
     check_in_str = request.GET.get('check_in')
     check_out_str = request.GET.get('check_out')
+    now = timezone.now()
+    today = now.date()
 
-    check_in = None
-    check_out = None
+    check_in = datetime.strptime(check_in_str, "%Y-%m-%d").date()
+    check_out = datetime.strptime(check_out_str, "%Y-%m-%d").date()
 
     try:
         if check_in_str:
@@ -537,5 +540,15 @@ def analytics_view(request):
     }
 
     return render(request, 'analytics.html', context)
+
+
+@login_required
+def order_delete_view(request, order_id):
+    order = get_object_or_404(Order, id=order_id, creator=request.user.profile)
+    if request.method == 'POST':
+        order.delete()  # удаляет запись и вызовет post_delete сигнал
+        messages.success(request, "Заказ успешно удалён.")
+        return redirect('profile')
+    return redirect('profile')
 
 # Create your views here.
