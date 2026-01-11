@@ -33,6 +33,7 @@ python -m venv venv
 ```
 
 3. **Активируем виртуальное окружение**
+
 Windows:
 ```
 cd practic_platform
