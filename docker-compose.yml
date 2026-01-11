@@ -1,0 +1,34 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16
+    container_name: practic_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Valeria89
+      POSTGRES_DB: hotel
+    ports:
+      - "2806:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  web:
+    build: .
+    container_name: practic_web
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: hotel
+      DB_USER: postgres
+      DB_PASSWORD: Valeria89
+
+volumes:
+  postgres_data:

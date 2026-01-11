@@ -1,0 +1,58 @@
+stages:
+  - build
+  - test
+  - deploy
+
+variables:
+  # Используем Python 3.12 для сборки
+  PYTHON_IMAGE: python:3.12
+  DOCKER_HOST: tcp://docker:2375/
+  DOCKER_TLS_CERTDIR: ""
+
+before_script:
+  - pip install poetry  # если используешь poetry
+  - pip install -r requirements.txt
+
+# -------------------------------
+# Сборка Docker-образа
+build:
+  stage: build
+  image: docker:20.10.24  # официальный Docker
+  services:
+    - docker:20.10.24-dind
+  script:
+    - docker build -t myproject:latest .
+  only:
+    - main
+
+# -------------------------------
+# Запуск тестов
+test:
+  stage: test
+  image: $PYTHON_IMAGE
+  services:
+    - postgres:16
+  variables:
+    POSTGRES_DB: hotel
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD: Valeria89
+  before_script:
+    - pip install -r requirements.txt
+  script:
+    - python manage.py migrate
+    - python manage.py test
+  only:
+    - merge_requests
+    - main
+
+# -------------------------------
+# Деплой (например, в staging)
+deploy:
+  stage: deploy
+  image: docker:20.10.24
+  services:
+    - docker:20.10.24-dind
+  script:
+    - docker-compose -f docker-compose.yml up -d --build
+  only:
+    - main

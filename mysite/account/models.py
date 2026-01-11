@@ -18,11 +18,11 @@ class Role(models.Model):
 
 class Profile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True)
-    first_name = models.CharField(blank=False, null=False, max_length=20, verbose_name="Имя")
-    second_name = models.CharField(blank=False, null=False, max_length=20, verbose_name="Фамилия")
+    first_name = models.CharField(blank=False, null=False, max_length=255, verbose_name="Имя")
+    second_name = models.CharField(blank=False, null=False, max_length=255, verbose_name="Фамилия")
     phone_number = models.CharField(blank=False, null=False, max_length=20, verbose_name="Телефон")
     date_of_birth = models.DateField(blank=True, null=True)
-    email = models.EmailField(blank=False, null=False, max_length=50, verbose_name="Электронная почта")
+    email = models.EmailField(blank=False, null=False, max_length=255, verbose_name="Электронная почта")
     email_confirmed = models.BooleanField(default=False)
     role = models.ForeignKey(Role, on_delete=models.CASCADE)
     is_guest = models.BooleanField(default=False)
@@ -54,7 +54,7 @@ class Profile(models.Model):
 
 
 class Conveniences(models.Model):
-    name = models.CharField(blank=False, null=False, max_length=50)
+    name = models.CharField(blank=False, null=False, max_length=255)
     icon = models.CharField(max_length=100, blank=True, null=True, help_text="CSS класс иконки или путь к изображению")
     price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
@@ -63,7 +63,7 @@ class Conveniences(models.Model):
 
 
 class RoomType(models.Model):
-    name = models.CharField(max_length=100)  # Название типа (например, "Стандарт", "Люкс")
+    name = models.CharField(max_length=255)  # Название типа (например, "Стандарт", "Люкс")
     description = models.TextField()  # Общее описание для типа
     conveniences = models.ManyToManyField(Conveniences, blank=True)
     capacity = models.PositiveIntegerField(default=1)  # Вместимость
@@ -109,8 +109,8 @@ class Tariff(models.Model):
     title = models.CharField(max_length=255)
     price_per_night = models.DecimalField(max_digits=8, decimal_places=2)
     includes_breakfast = models.BooleanField(default=False)
-    bed_type = models.CharField(max_length=20, choices=BED_TYPE_CHOICES, default='double')
-    cancellation = models.CharField(help_text="Условия отмены", max_length=1000)
+    bed_type = models.CharField(max_length=255, choices=BED_TYPE_CHOICES, default='double')
+    cancellation = models.CharField(help_text="Условия отмены", max_length=2000)
 
     def cancellation_deadline(self):
         """Возвращает дату, до которой можно отменить бронирование без штрафа"""
