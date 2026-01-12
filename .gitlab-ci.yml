@@ -1,26 +1,20 @@
-stages:
-  - test
-  - build
-  - deploy
-
 variables:
-  POSTGRES_DB: hotel
-  POSTGRES_USER: postgres
-  POSTGRES_PASSWORD: Valeria89
-  DB_HOST: db
-  DB_PORT: 5432
   DB_NAME: hotel
   DB_USER: postgres
   DB_PASSWORD: Valeria89
+  DB_HOST: practic_db  # <-- здесь хост локального контейнера
+  DB_PORT: 5432
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
 
 cache:
   paths:
     - .cache/pip
 
-# -------------------
-# Job: Тесты Django
-# -------------------
+stages:
+  - test
+  - build
+  - deploy
+
 test:
   stage: test
   tags:
@@ -28,11 +22,8 @@ test:
   script:
     - python -m pip install --upgrade pip
     - pip install -r "$CI_PROJECT_DIR/requirements.txt"
-    - $Env:DB_NAME="hotel"
-    - $Env:DB_USER="postgres"
-    - $Env:DB_PASSWORD="Valeria89"
-    - $Env:DB_HOST="db"
-    - $Env:DB_PORT="5432"
+    # Проверка доступности БД
+    - powershell -Command "while(-not (Test-NetConnection -ComputerName $Env:DB_HOST -Port $Env:DB_PORT).TcpTestSucceeded){Write-Host 'Waiting for DB...'; Start-Sleep -Seconds 2}"
     - python "$CI_PROJECT_DIR/mysite/manage.py" migrate --noinput
     - python "$CI_PROJECT_DIR/mysite/manage.py" test
   artifacts:
@@ -42,9 +33,6 @@ test:
     paths:
       - report.xml
 
-# -------------------
-# Job: Сборка Docker образа (необязательно для тестов)
-# -------------------
 build:
   stage: build
   tags:
@@ -54,25 +42,13 @@ build:
   only:
     - main
 
-# -------------------
-# Job: Деплой проекта
-# -------------------
 deploy:
   stage: deploy
   tags:
     - powershell
   script:
-    # Останавливаем старый контейнер
     - docker rm -f practic_platform_web || true
-    # Запускаем новый
-    - docker run -d --name practic_platform_web -p 8000:8000 `
-        --env DB_HOST=db `
-        --env DB_PORT=5432 `
-        --env DB_NAME=hotel `
-        --env DB_USER=postgres `
-        --env DB_PASSWORD=Valeria89 `
-        practic_platform:latest
-    # Миграции внутри контейнера
+    - docker run -d --name practic_platform_web --network practic_network --env DB_HOST=practic_db --env DB_PORT=5432 --env DB_NAME=hotel --env DB_USER=postgres --env DB_PASSWORD=Valeria89 practic_platform:latest
     - docker exec practic_platform_web python manage.py migrate --noinput
   when: manual
   only:
