@@ -1,0 +1,76 @@
+# Created by venv; see https://docs.python.org/3/library/venv.html
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.pdb
+*.egg-info/
+*.egg
+
+# Virtual environment
+venv/
+env/
+ENV/
+.venv/
+my_env/
+
+# Django
+*.log
+*.pot
+*.pyc
+*.sqlite3
+db.sqlite3
+media/
+staticfiles/
+*.mo
+*.py[cod]
+*.swp
+.DS_Store
+
+# Django migrations (если хочешь хранить, убери!)
+mysite/**/migrations/__pycache__/
+mysite/**/migrations/*.pyc
+
+# Docker
+docker-compose.override.yml
+**/Dockerfile.*
+**/docker-compose.override.yml
+**/docker-compose.*.yml
+**/docker-sync.yml
+
+# Docker volumes / tmp
+postgres_data/
+tmp/
+*.dump
+*.sql
+
+# IDEs
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Git
+*.bak
+*.orig
+*.rej
+
+# Environment variables
+.env
+.env.*
+
+# Coverage and testing
+htmlcov/
+.coverage
+.tox/
+.nox/
+.pytest_cache/
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+

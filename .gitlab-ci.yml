@@ -1,69 +1,89 @@
 stages:
   - test
+  - build
+  - deploy
 
-test_job:
+variables:
+  POSTGRES_DB: hotel
+  POSTGRES_USER: postgres
+  POSTGRES_PASSWORD: Valeria89
+  DB_HOST: db
+  DB_PORT: 5432
+  DB_NAME: hotel
+  DB_USER: postgres
+  DB_PASSWORD: Valeria89
+  DOCKER_DRIVER: overlay2
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
+# Кэширование pip
+cache:
+  paths:
+    - .cache/pip
+
+# Сервис: база данных для тестов
+services:
+  - name: postgres:16
+    alias: db
+    command: ["postgres", "-c", "log_statement=all"]
+
+# -------------------
+# Job: Тесты Django
+# -------------------
+test:
   stage: test
   image: python:3.12
+  before_script:
+    - python -m pip install --upgrade pip
+    - pip install -r requirements.txt
   script:
-    - python --version
-    - echo "Hello from GitLab Runner!"
+    # Применяем миграции и запускаем тесты
+    - python manage.py migrate --noinput
+    - python manage.py test
+  artifacts:
+    when: always
+    reports:
+      junit: report.xml
+    paths:
+      - report.xml
 
-# stages:
-#   - build
-#   - test
-#   - deploy
+# -------------------
+# Job: Сборка Docker образа
+# -------------------
+build:
+  stage: build
+  image: docker:24
+  services:
+    - docker:dind
+  before_script:
+    - docker info
+  script:
+    - docker build -t practic_platform:latest .
+  only:
+    - main
 
-# variables:
-#   # Используем Python 3.12 для сборки
-#   PYTHON_IMAGE: python:3.12
-#   DOCKER_HOST: tcp://docker:2375/
-#   DOCKER_TLS_CERTDIR: ""
-
-# before_script:
-#   - pip install poetry  # если используешь poetry
-#   - pip install -r requirements.txt
-
-# # -------------------------------
-# # Сборка Docker-образа
-# build:
-#   stage: build
-#   image: docker:20.10.24  # официальный Docker
-#   services:
-#     - docker:20.10.24-dind
-#   script:
-#     - docker build -t myproject:latest .
-#   only:
-#     - main
-
-# # -------------------------------
-# # Запуск тестов
-# test:
-#   stage: test
-#   image: $PYTHON_IMAGE
-#   services:
-#     - postgres:16
-#   variables:
-#     POSTGRES_DB: hotel
-#     POSTGRES_USER: postgres
-#     POSTGRES_PASSWORD: Valeria89
-#   before_script:
-#     - pip install -r requirements.txt
-#   script:
-#     - python manage.py migrate
-#     - python manage.py test
-#   only:
-#     - merge_requests
-#     - main
-
-# # -------------------------------
-# # Деплой (например, в staging)
-# #test1
-# deploy:
-#   stage: deploy
-#   image: docker:20.10.24
-#   services:
-#     - docker:20.10.24-dind
-#   script:
-#     - docker-compose -f docker-compose.yml up -d --build
-#   only:
-#     - main
+# -------------------
+# Job: Деплой проекта
+# -------------------
+deploy:
+  stage: deploy
+  image: docker:24
+  services:
+    - docker:dind
+  before_script:
+    - docker info
+  script:
+    # Останавливаем старый контейнер, если он есть
+    - docker rm -f practic_platform_web || true
+    # Запускаем контейнер с проектом на основе Dockerfile
+    - docker run -d --name practic_platform_web -p 8000:8000 \
+        --env DB_HOST=db \
+        --env DB_PORT=5432 \
+        --env DB_NAME=hotel \
+        --env DB_USER=postgres \
+        --env DB_PASSWORD=Valeria89 \
+        practic_platform:latest
+    # Применяем миграции внутри контейнера
+    - docker exec practic_platform_web python manage.py migrate --noinput
+  when: manual
+  only:
+    - main
