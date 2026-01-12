@@ -32,7 +32,6 @@ services:
 # -------------------
 test:
   stage: test
-  image: python:3.12
   tags:
     - practic_platform
   script:
