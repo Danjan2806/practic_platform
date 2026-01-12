@@ -144,7 +144,7 @@ class Order(models.Model):
     def calculate_total_price(self):
         nights = (self.check_out - self.check_in).days
         room_cost = self.tariff.price_per_night * nights
-        conveniences_cost = sum(conveniences.price for convenience in self.conveniences.all())
+        conveniences_cost = sum(convenience.price for convenience in self.conveniences.all())
         return room_cost + conveniences_cost
 
     def save(self, *args, **kwargs):

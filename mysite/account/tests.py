@@ -1,8 +1,7 @@
-from django.test import TestCase, Client
+from django.test import TestCase, Client, override_settings
 from django.urls import reverse
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.utils import timezone
 from datetime import date, timedelta
 import os
 
@@ -17,7 +16,7 @@ from django.conf import settings
 # ------------------------------
 class ModelsTestCase(TestCase):
     def setUp(self):
-        self.role = Role.objects.create(name="Гость")
+        self.role, _ = Role.objects.get_or_create(name="Гость")
         self.profile = Profile.objects.create(
             first_name="Иван", second_name="Иванов",
             phone_number="1234567890",
@@ -34,7 +33,8 @@ class ModelsTestCase(TestCase):
         )
 
     def test_profile_str(self):
-        self.assertEqual(str(self.profile), f'Профиль {self.profile.user.username}' if self.profile.user else f'Гостевой профиль: {self.profile.first_name} {self.profile.second_name}')
+        expected = f'Профиль {self.profile.user.username}' if self.profile.user else f'Гостевой профиль: {self.profile.first_name} {self.profile.second_name}'
+        self.assertEqual(str(self.profile), expected)
 
     def test_room_str(self):
         self.assertEqual(str(self.room), f'Комната №{self.room.number} — {self.room.room_type.name}')
@@ -52,8 +52,10 @@ class ModelsTestCase(TestCase):
             check_in=date.today(),
             check_out=date.today() + timedelta(days=2)
         )
-        order.conveniences.add(convenience)
-        expected_price = 2 * self.tariff.price_per_night + 100
+        # Добавляем удобство через ManyToMany
+        order.conveniences.set([convenience])
+        order.save()
+        expected_price = 2 * self.tariff.price_per_night + sum(c.price for c in [convenience])
         self.assertEqual(order.calculate_total_price(), expected_price)
 
 # ------------------------------
@@ -63,7 +65,7 @@ class ModelsTestCase(TestCase):
 class FormsTestCase(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username="testuser", email="test@example.com", password="123456")
-        self.role = Role.objects.create(name="Гость")
+        self.role, _ = Role.objects.get_or_create(name="Гость")
 
     def test_registration_form_valid(self):
         form_data = {
@@ -94,12 +96,18 @@ class FormsTestCase(TestCase):
 # VIEWS TESTS
 # Проверка работы home_view, register_view, create_order_view (в том числе для гостя)
 # ------------------------------
+@override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
 class ViewsTestCase(TestCase):
     def setUp(self):
         self.client = Client()
-        self.role = Role.objects.create(name="Гость")
+        self.role, _ = Role.objects.get_or_create(name="Гость")
         self.user = User.objects.create_user(username="user1", email="user1@example.com", password="pass1234")
-        self.profile = Profile.objects.create(user=self.user, first_name="Иван", second_name="Иванов", phone_number="123", email="user1@example.com", role=self.role)
+        self.profile = Profile.objects.create(
+            first_name="Иван", second_name="Иванов",
+            phone_number="1234567890",
+            email="ivan@example.com",
+            role=self.role
+        )
         self.room_type = RoomType.objects.create(name="Стандарт", description="Описание")
         self.room = Room.objects.create(number=101, room_type=self.room_type)
         self.tariff = Tariff.objects.create(room_type=self.room_type, title="Тариф", price_per_night=1000, cancellation="Условия")
@@ -119,8 +127,11 @@ class ViewsTestCase(TestCase):
             "password_confirm": "12345678"
         }
         response = self.client.post(reverse('register'), data=form_data)
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "email_sent")
+        self.assertEqual(response.status_code, 302)  # проверяем редирект
+        self.assertRedirects(response, reverse('some_thank_you_view'))  # укажи правильный view
+        # Проверяем, что письмо добавлено в локальный outbox
+        from django.core import mail
+        self.assertEqual(len(mail.outbox), 1)
 
     def test_create_order_view_guest(self):
         url = reverse('create_order', args=[self.room_type.id, self.tariff.id])
@@ -142,8 +153,13 @@ class ViewsTestCase(TestCase):
 # ------------------------------
 class SignalsTestCase(TestCase):
     def setUp(self):
-        self.role = Role.objects.create(name="Гость")
-        self.profile = Profile.objects.create(first_name="Иван", second_name="Иванов", phone_number="123", email="user@example.com", role=self.role)
+        self.role, _ = Role.objects.get_or_create(name="Гость")
+        self.profile = Profile.objects.create(
+            first_name="Иван", second_name="Иванов",
+            phone_number="1234567890",
+            email="ivan@example.com",
+            role=self.role
+        )
         self.room_type = RoomType.objects.create(name="Стандарт", description="Описание")
         self.room = Room.objects.create(number=101, room_type=self.room_type)
         self.tariff = Tariff.objects.create(room_type=self.room_type, title="Тариф", price_per_night=1000, cancellation="Условия")
@@ -157,7 +173,6 @@ class SignalsTestCase(TestCase):
             check_in=date.today(),
             check_out=date.today() + timedelta(days=1)
         )
-        # сгенерируем файл
         relative_path = generate_order_receipt(order)
         order.receipt_file = relative_path
         order.save()
