@@ -25,6 +25,7 @@ from collections import defaultdict
 from django.utils.dateformat import format as df
 from django.utils import timezone
 
+
 signer = TimestampSigner()
 
 def user_login(request):
