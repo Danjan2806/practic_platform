@@ -2,7 +2,7 @@ variables:
   DB_NAME: hotel
   DB_USER: postgres
   DB_PASSWORD: Valeria89
-  DB_HOST: practic_db  # <-- здесь хост локального контейнера
+  DB_HOST: db  # <-- здесь хост локального контейнера
   DB_PORT: 5432
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
 
