@@ -552,3 +552,4 @@ def order_delete_view(request, order_id):
     return redirect('profile')
 
 # Create your views here.
+print('test gitlab')
