@@ -2,7 +2,7 @@ variables:
   DB_NAME: hotel
   DB_USER: postgres
   DB_PASSWORD: Valeria89
-  DB_HOST: db  # <-- здесь хост локального контейнера
+  DB_HOST: practic_db  # <-- здесь хост локального контейнера
   DB_PORT: 5432
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
 
@@ -23,8 +23,6 @@ test:
     - python -m pip install --upgrade pip
     - pip install -r "$CI_PROJECT_DIR/requirements.txt"
     # Проверка доступности БД
-    - powershell -Command "while(-not (Test-NetConnection -ComputerName $Env:DB_HOST -Port $Env:DB_PORT).TcpTestSucceeded){Write-Host 'Waiting for DB...'; Start-Sleep -Seconds 2}"
-    - python "$CI_PROJECT_DIR/mysite/manage.py" migrate --noinput
     - python "$CI_PROJECT_DIR/mysite/manage.py" test
   artifacts:
     when: always
