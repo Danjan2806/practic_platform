@@ -17,19 +17,16 @@ stages:
 
 test:
   stage: test
+  image: docker:20.10.24  # нужен Docker
+  services:
+    - docker:dind
   tags:
     - powershell
   script:
     - python -m pip install --upgrade pip
     - pip install -r "$CI_PROJECT_DIR/requirements.txt"
     # Проверка доступности БД
-    - python "$CI_PROJECT_DIR/mysite/manage.py" test
-  artifacts:
-    when: always
-    reports:
-      junit: report.xml
-    paths:
-      - report.xml
+    - docker-compose run --rm web python manage.py test
 
 build:
   stage: build
