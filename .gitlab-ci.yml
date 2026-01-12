@@ -35,13 +35,11 @@ test:
   image: python:3.12
   tags:
     - practic_platform
-  before_script:
+  script:
     - python -m pip install --upgrade pip
     - pip install -r requirements.txt
-  script:
-    # Применяем миграции и запускаем тесты
-    - docker-compose run --rm web python manage.py migrate --noinput
-    - docker-compose run --rm web python manage.py test
+    - python manage.py migrate --noinput
+    - python manage.py test
   artifacts:
     when: always
     reports:
