@@ -42,9 +42,12 @@ deploy:
   tags:
     - powershell
   script:
-    - docker rm -f practic_platform_web || true
-    - docker run -d --name practic_platform_web --network practic_network --env DB_HOST=practic_db --env DB_PORT=5432 --env DB_NAME=hotel --env DB_USER=postgres --env DB_PASSWORD=Valeria89 practic_platform:latest
-    - docker exec practic_platform_web python manage.py migrate --noinput
+    # Останавливаем и удаляем старый контейнер (если был)
+    - docker-compose -f docker-compose.yml down || true
+    # Собираем образы и запускаем web (подключится к db автоматически через сеть docker-compose)
+    - docker-compose -f docker-compose.yml up -d --build web
+    # Делаем миграции внутри контейнера web
+    - docker-compose -f docker-compose.yml exec web python manage.py migrate --noinput
   when: manual
   only:
     - main
