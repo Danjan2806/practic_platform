@@ -7,25 +7,16 @@ variables:
   POSTGRES_DB: hotel
   POSTGRES_USER: postgres
   POSTGRES_PASSWORD: Valeria89
-  DB_HOST: db
+  DB_HOST: localhost
   DB_PORT: 5432
   DB_NAME: hotel
   DB_USER: postgres
   DB_PASSWORD: Valeria89
-  DOCKER_DRIVER: overlay2
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
 
-# test txt
-# Кэширование pip
 cache:
   paths:
     - .cache/pip
-
-# Сервис: база данных для тестов
-services:
-  - name: postgres:16
-    alias: db
-    command: ["postgres", "-c", "log_statement=all"]
 
 # -------------------
 # Job: Тесты Django
@@ -33,10 +24,14 @@ services:
 test:
   stage: test
   tags:
-    - practic_platform
+    - powershell
   script:
+    - cd "$CI_PROJECT_DIR/mysite"
+    # Обновляем pip и устанавливаем зависимости
     - python -m pip install --upgrade pip
     - pip install -r requirements.txt
+
+    # Применяем миграции и запускаем тесты
     - python manage.py migrate --noinput
     - python manage.py test
   artifacts:
@@ -47,17 +42,12 @@ test:
       - report.xml
 
 # -------------------
-# Job: Сборка Docker образа
+# Job: Сборка Docker образа (необязательно для тестов)
 # -------------------
 build:
   stage: build
-  image: docker:24
   tags:
-    - practic_platform
-  services:
-    - docker:dind
-  before_script:
-    - docker info
+    - powershell
   script:
     - docker build -t practic_platform:latest .
   only:
@@ -68,25 +58,20 @@ build:
 # -------------------
 deploy:
   stage: deploy
-  image: docker:24
   tags:
-    - practic_platform
-  services:
-    - docker:dind
-  before_script:
-    - docker info
+    - powershell
   script:
-    # Останавливаем старый контейнер, если он есть
+    # Останавливаем старый контейнер
     - docker rm -f practic_platform_web || true
-    # Запускаем контейнер с проектом на основе Dockerfile
-    - docker run -d --name practic_platform_web -p 8000:8000 \
-        --env DB_HOST=db \
-        --env DB_PORT=5432 \
-        --env DB_NAME=hotel \
-        --env DB_USER=postgres \
-        --env DB_PASSWORD=Valeria89 \
+    # Запускаем новый
+    - docker run -d --name practic_platform_web -p 8000:8000 `
+        --env DB_HOST=localhost `
+        --env DB_PORT=5432 `
+        --env DB_NAME=hotel `
+        --env DB_USER=postgres `
+        --env DB_PASSWORD=Valeria89 `
         practic_platform:latest
-    # Применяем миграции внутри контейнера
+    # Миграции внутри контейнера
     - docker exec practic_platform_web python manage.py migrate --noinput
   when: manual
   only:
