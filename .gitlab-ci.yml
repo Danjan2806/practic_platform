@@ -26,14 +26,13 @@ test:
   tags:
     - powershell
   script:
-    - cd "$CI_PROJECT_DIR/mysite"
     # Обновляем pip и устанавливаем зависимости
     - python -m pip install --upgrade pip
-    - pip install -r requirements.txt
+    - pip install -r "$CI_PROJECT_DIR/requirements.txt"
 
     # Применяем миграции и запускаем тесты
-    - python manage.py migrate --noinput
-    - python manage.py test
+    - python "$CI_PROJECT_DIR/mysite/manage.py" migrate --noinput
+    - python "$CI_PROJECT_DIR/mysite/manage.py" test
   artifacts:
     when: always
     reports:
