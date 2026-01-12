@@ -38,8 +38,8 @@ test:
     - pip install -r requirements.txt
   script:
     # Применяем миграции и запускаем тесты
-    - python manage.py migrate --noinput
-    - python manage.py test
+    - docker-compose run --rm web python manage.py migrate --noinput
+    - docker-compose run --rm web python manage.py test
   artifacts:
     when: always
     reports:
