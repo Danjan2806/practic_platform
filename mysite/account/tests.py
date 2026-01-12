@@ -55,6 +55,7 @@ class ModelsTestCase(TestCase):
             cancellation="Без штрафа"
         )
 
+    # проверяет корректную строковую репрезентацию профиля (__str__).
     def test_profile_str(self):
         expected = (
             f'Профиль {self.profile.user.username}'
@@ -63,18 +64,21 @@ class ModelsTestCase(TestCase):
         )
         self.assertEqual(str(self.profile), expected)
 
+    # гарантирует корректное отображение номера комнаты и типа в интерфейсе и админке.
     def test_room_str(self):
         self.assertEqual(
             str(self.room),
             f'Комната №{self.room.number} — {self.room.room_type.name}'
         )
 
+    # проверяет читабельное отображение тарифа (тип комнаты + название тарифа).
     def test_tariff_str(self):
         self.assertEqual(
             str(self.tariff),
             f"{self.room_type.name} — {self.tariff.title}"
         )
 
+    # проверяет метод Order.calculate_total_price().
     def test_order_total_price(self):
         # Удобство
         convenience = Conveniences.objects.create(
@@ -113,6 +117,7 @@ class FormsTestCase(TestCase):
         self.user = User.objects.create_user(username="testuser", email="test@example.com", password="123456")
         self.role_guest, _ = Role.objects.get_or_create(name="Гость")
 
+    # проверяет что форма регистрации валидна при корректных данных.
     def test_registration_form_valid(self):
         form_data = {
             "first_name": "Пётр",
@@ -125,6 +130,7 @@ class FormsTestCase(TestCase):
         form = RegistrationForm(data=form_data)
         self.assertTrue(form.is_valid())
 
+    # проверяет что форма отклоняет несовпадающие пароли.
     def test_registration_form_password_mismatch(self):
         form_data = {
             "first_name": "Пётр",
@@ -247,6 +253,7 @@ class SignalsTestCase(TestCase):
             room_type=self.room_type, title="Тариф", price_per_night=1000, cancellation="Условия"
         )
 
+    # проверяет что файл чека удаляется с диска при удалении заказа.
     def test_post_delete_receipt_file(self):
         order = Order.objects.create(
             order_number="F2026011100001",
