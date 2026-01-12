@@ -47,6 +47,7 @@ test:
 
 # -------------------------------
 # Деплой (например, в staging)
+#test1
 deploy:
   stage: deploy
   image: docker:20.10.24
