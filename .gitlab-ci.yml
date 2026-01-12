@@ -8,7 +8,6 @@ test_job:
     - python --version
     - echo "Hello from GitLab Runner!"
 
-#gfgfgfg
 # stages:
 #   - build
 #   - test
