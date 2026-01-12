@@ -26,11 +26,6 @@ test:
   tags:
     - powershell
   script:
-    - [System.Environment]::SetEnvironmentVariable('DB_NAME', $Env:DB_NAME)
-    - [System.Environment]::SetEnvironmentVariable('DB_USER', $Env:DB_USER)
-    - [System.Environment]::SetEnvironmentVariable('DB_PASSWORD', $Env:DB_PASSWORD)
-    - [System.Environment]::SetEnvironmentVariable('DB_HOST', $Env:DB_HOST)
-    - [System.Environment]::SetEnvironmentVariable('DB_PORT', $Env:DB_PORT)
     - python -m pip install --upgrade pip
     - pip install -r "$CI_PROJECT_DIR/requirements.txt"
     - echo "DB_PASSWORD='$Env:DB_PASSWORD'"
