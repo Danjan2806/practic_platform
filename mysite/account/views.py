@@ -552,4 +552,5 @@ def order_delete_view(request, order_id):
         return redirect('profile')
     return redirect('profile')
 
+print("aboBA")
 # Create your views here.
